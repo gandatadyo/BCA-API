@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCA (TRANSFER DANA)</title>
+</head>
+
+<body>
+    <h1>3.BCA Fund Transfer (TRANSFER DANA)</h1>
+
+    <hr>
+    <b>Timestamps</b>
+    <div id="lbltimestamps"></div>
+    <h3>Information</h3>
+
+    Utilities
+    <table border="1">
+        <tr>
+            <td>Authorization</td>
+            <td id="lblinfo_Authorization"></td>
+        </tr>
+        <tr>
+            <td>Content-Type</td>
+            <td>application/x-www-form-urlencoded</td>
+        </tr>
+        <tr>
+            <td>grant_type</td>
+            <td>client_credentials</td>
+        </tr>
+    </table>
+    <button onclick="GetToken();">Generate Utilities (Token)</button>
+    <div id="result_Utilities"></div>
+
+    <br />
+    Utilities-Signature
+    <table border="1">
+        <tr>
+            <td>Timestamp</td>
+            <td id="lblinfo_Utilities-Signature_Timestamp"></td>
+        </tr>
+        <tr>
+            <td>URI</td>
+            <td id="lblinfo_Content-Type">/banking/corporates/transfers</td>
+        </tr>
+        <tr>
+            <td>AccessToken</td>
+            <td id="lblinfo_Utilities-Signature_AccessToken"></td>
+        </tr>
+        <tr>
+            <td>APISecret</td>
+            <td>a640c419-de94-4c70-a8be-248bc9fc8060</td>
+        </tr>
+        <tr>
+            <td>HTTPMethod</td>
+            <td>POST</td>
+        </tr>
+        <tr>
+            <td>RequestPayload</td>
+            <td id="lblinfo_Utilities-Signature_RequestPayload"></td>
+        </tr>
+    </table>
+    <button onclick="Utility();">Generate Utilities-Signature (Signature)</button>
+    <div id="result_Utilities-Signature"></div>
+
+    <br />
+    Banking-Corporates-Transfers
+    <table border="1">
+        <tr>
+            <td>Authorization</td>
+            <td id="lblinfo_Banking-Corporates-Transfers_Authorization"></td>
+        </tr>
+        <tr>
+            <td>X-BCA-Signature</td>
+            <td id="lblinfo_Banking-Corporates-Transfers_X-BCA-Signature"></td>
+        </tr>
+        <tr>
+            <td>body</td>
+            <td id="lblinfo_Banking-Corporates-Transfers_body"></td>
+        </tr>
+        <tr>
+            <td>Content-Type</td>
+            <td>application/json</td>
+        </tr>
+        <tr>
+            <td>X-BCA-Key</td>
+            <td>c92b531e-04d6-49bc-a31e-2ebccb9c4568</td>
+        </tr>
+        <tr>
+            <td>X-BCA-Timestamp</td>
+            <td id="lblinfo_Banking-Corporates-Transfers_Timestamp"></td>
+        </tr>
+    </table>
+    <button onclick="Transfer();">Generate Banking-Corporates-Transfers (<b>Transfer Account</b>)</button>
+    <div id="result_Banking-Corporates-Transfers"></div>
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        function GetTime() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            var datetime =
+                yyyy + "-"
+                + mm + "-"
+                + dd + "T"
+                + today.getHours() + ":"
+                + today.getMinutes() + ":"
+                + today.getSeconds() + ".000+07:00";
+            return datetime
+        }
+
+        const timeStamps = GetTime();
+        document.getElementById('lbltimestamps').innerHTML = timeStamps;
+
+        const client_id = `9c237a77-1ce6-4b47-99ba-c00b1eae51b4`;
+        const client_secret = `ad5da343-ddcc-48d9-b97c-701cb872ac10`;
+        document.getElementById('lblinfo_Authorization').innerHTML = 'Basic ' + EncodeBase64(`${client_id}:${client_secret}`);
+        const authkey = 'Basic ' + EncodeBase64(`${client_id}:${client_secret}`);
+        const apikey = `c92b531e-04d6-49bc-a31e-2ebccb9c4568`;
+        const apiSecret = `a640c419-de94-4c70-a8be-248bc9fc8060`;
+
+        let accessToken = '';
+        let CalculatedHMAC = '';
+
+        document.getElementById('lblinfo_Utilities-Signature_Timestamp').innerHTML = timeStamps;
+
+
+        let dataparam_BankTransfer = {
+            "CorporateID": "BCAAPI2016",
+            "SourceAccountNumber": "0201245680",
+            "TransactionID": "00000001",
+            "TransactionDate": "2020-10-30",
+            "ReferenceID": "12345/PO/2016",
+            "CurrencyCode": "IDR",
+            "Amount": "109999.00",
+            "BeneficiaryAccountNumber": "0201245681",
+            "Remark1": "Transfer Test",
+            "Remark2": "Online Transfer"
+        }
+
+        document.getElementById('lblinfo_Banking-Corporates-Transfers_body').innerHTML = JSON.stringify(dataparam_BankTransfer);
+        document.getElementById('lblinfo_Utilities-Signature_RequestPayload').innerHTML = JSON.stringify(dataparam_BankTransfer);
+
+        // GetToken()
+        function GetToken() {
+            $.ajax({
+                type: "post",
+                url: 'https://sandbox.bca.co.id/api/oauth/token',
+                headers: {
+                    'Authorization': authkey,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data: {
+                    'grant_type': 'client_credentials'
+                },
+                success: function (response) {
+                    accessToken = response.access_token;
+
+                    document.getElementById('lblinfo_Utilities-Signature_AccessToken').innerHTML = accessToken;
+                    document.getElementById('result_Utilities').innerHTML = JSON.stringify(response);
+                    // Utility()
+                }
+            });
+        }
+
+        function Utility() {
+            //parameter khusus
+            let headers = {
+                'Timestamp': timeStamps,
+                'URI': '/banking/corporates/transfers',
+                'AccessToken': accessToken,
+                'APISecret': apiSecret,
+                'HTTPMethod': 'POST',
+                'Content-Type': 'application/json',
+            };
+
+            $.ajax({
+                type: "post",
+                url: 'https://sandbox.bca.co.id/utilities/signature',
+                dataType: 'text',
+                headers: headers,
+                data: JSON.stringify(dataparam_BankTransfer),
+                success: function (response) {
+                    let ct = response.indexOf('CalculatedHMAC');
+                    let hmac_temp = response.substring(parseInt(ct) + 15, response.length);
+
+                    CalculatedHMAC = hmac_temp;
+
+                    document.getElementById('result_Utilities-Signature').innerHTML = response;
+                    document.getElementById('lblinfo_Banking-Corporates-Transfers_X-BCA-Signature').innerHTML = CalculatedHMAC;
+                    document.getElementById('lblinfo_Banking-Corporates-Transfers_Timestamp').innerHTML = timeStamps;
+                    document.getElementById('lblinfo_Banking-Corporates-Transfers_Authorization').innerHTML = `Bearer ${accessToken}`;
+                }
+            });
+        }
+
+        function Transfer() {
+            $.ajax({
+                type: "POST",
+                url: `https://sandbox.bca.co.id/banking/corporates/transfers`,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-BCA-Signature': CalculatedHMAC,
+                    'Content-Type': 'application/json',
+                    'X-BCA-Key': apikey,
+                    'X-BCA-Timestamp': timeStamps,
+                },
+                data: JSON.stringify(dataparam_BankTransfer),
+                success: function (response) {
+                    document.getElementById('result_Banking-Corporates-Transfers').innerHTML = JSON.stringify(response)
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert('error');
+                    document.getElementById('result_Banking-Corporates-Transfers').innerHTML = xhr.responseText;
+                }
+            });
+        }
+
+
+        function EncodeBase64(stext) { return btoa(stext) }
+        function DecodeBase64(stext) { return atob(stext) }
+    </script>
+</body>
+
+</html>
